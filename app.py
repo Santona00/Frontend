@@ -22,39 +22,40 @@ st.sidebar.info(
 bd_districts = load(
     open('bangladesh_geojson_adm2_64_districts_zillas.json', 'r'))
 bd_districts['features'][61].keys()
-#bd_districts["features"][61]['properties']
+# bd_districts["features"][61]['properties']
 dff = pd.read_csv('final_report.csv')
 
 district_id_map = {}
 for feature in bd_districts["features"]:
     feature["id"] = feature["id"]
     district_id_map[feature["properties"]["ADM2_EN"]] = feature["id"]
-#district_id_map
+# district_id_map
 default_value = None
 dff['id'] = dff.District.apply(lambda x: district_id_map.get(x, default_value))
 dff.to_csv('final_output.csv', index=False)
 final_data = pd.read_csv('final_output.csv')
-#final_data
+# final_data
 
 # -------------------dividing time period------------------------
 color = cm.inferno_r(np.linspace(.3, .7, 64))
 
-grouped = final_data.groupby(['LOCATION','District', 'id', 'time', 'time_of_day', 'day', 'week', 'month', 'year', 'Vehicle 1', 'Vehicle 2', 'Vehicle 3']).size().reset_index(name='total_accidents')
+grouped = final_data.groupby(['LOCATION', 'District', 'id', 'time', 'time_of_day', 'day', 'week',
+                             'month', 'year', 'Vehicle 1', 'Vehicle 2', 'Vehicle 3']).size().reset_index(name='total_accidents')
 time_data = grouped.copy()
 
 
-grouped = final_data.groupby(['LOCATION','District', 'id', 'day', 'week', 'month', 'year',
+grouped = final_data.groupby(['LOCATION', 'District', 'id', 'day', 'week', 'month', 'year',
                              'Vehicle 1', 'Vehicle 2', 'Vehicle 3']).size().reset_index(name='total_accidents')
 day_data = grouped.copy()
 
 
-grouped = final_data.groupby(['LOCATION','District', 'id', 'week', 'month', 'year']).size(
+grouped = final_data.groupby(['LOCATION', 'District', 'id', 'week', 'month', 'year']).size(
 ).reset_index(name='total_accidents')
 week_data = grouped.copy()
 
 
 grouped = final_data.groupby(
-    ['LOCATION','District', 'id', 'month', 'year']).size().reset_index(name='total_accidents')
+    ['LOCATION', 'District', 'id', 'month', 'year']).size().reset_index(name='total_accidents')
 month_data = grouped.copy()
 
 
@@ -77,14 +78,15 @@ row4_col1, row4_col2, row4_col3 = st.columns(
     [1, 1, 1]
 )
 row5_col1, row5_col2 = st.columns(
-    [1,1]
+    [1, 1]
 )
-#--------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 with row1_col1:
     time_period = st.selectbox(
         "Select time period:", ["Daily", "Weekly", "Monthly", "Yearly"])
 
-#--------------------------------------- check if each row satisfies the condition
+# --------------------------------------- check if each row satisfies the condition
+
 
 def year_func(yy):
     # create an empty DataFrame to hold the filtered data
@@ -95,6 +97,7 @@ def year_func(yy):
             filtered = pd.concat([filtered, row.to_frame().T])
     return filtered
 
+
 def month_func(yy, mm):
     filtered = pd.DataFrame()
     for index, row in month_data.iterrows():
@@ -102,13 +105,15 @@ def month_func(yy, mm):
             filtered = pd.concat([filtered, row.to_frame().T])
     return filtered
 
+
 def week_func(yy, mm, ww):
- 
+
     filtered = pd.DataFrame()
     for index, row in week_data.iterrows():
         if ((row['year'] == yy) & (row['month'] == mm) & (row['week'] == ww)):
             filtered = pd.concat([filtered, row.to_frame().T])
     return filtered
+
 
 def day_func(yy, mm, dd):
     filtered = pd.DataFrame()
@@ -117,7 +122,8 @@ def day_func(yy, mm, dd):
             filtered = pd.concat([filtered, row.to_frame().T])
     return filtered
 
-def wday_func(yy, mm, ww , dd):
+
+def wday_func(yy, mm, ww, dd):
     filtered = pd.DataFrame()
     for index, row in time_data.iterrows():
         if ((row['year'] == yy) & (row['month'] == mm) & (row['week'] == ww) & (row['day'] == dd)):
@@ -164,13 +170,13 @@ if time_period == "Daily":
             show_day = st.checkbox('Show week:')
     y = year
     m = month
-    d = day        
+    d = day
     filtered_data = day_func(y, m, d)
     if show_day:
         week = st.slider("Select week:", 1, 52, 1)
         w = week
-        filtered_data = wday_func(y, m, w , d)
-        
+        filtered_data = wday_func(y, m, w, d)
+
 
 # ------------------------------------------------------------------------------------
 init_notebook_mode(connected=True)
@@ -200,7 +206,7 @@ if 'total_accidents' in filtered_data:
                                color='total_accidents',
                                title=f'Bangladesh Road Accidents ({y} Year {m} month {d} day)',
                                hover_name='LOCATION',
-                               hover_data=['LOCATION' , 'District',
+                               hover_data=['LOCATION', 'District',
                                            'total_accidents', 'year', 'id'],
                                color_continuous_scale=[colorscale],
                                # color_continuous_scale="reds",
@@ -226,4 +232,3 @@ if 'total_accidents' in filtered_data:
 else:
     # Handle the error
     st.error('No data found !')
- 
