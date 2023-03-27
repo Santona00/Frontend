@@ -1,3 +1,5 @@
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
 import streamlit as st
 import plotly.colors as colors
 from plotly.offline import iplot, init_notebook_mode
@@ -10,6 +12,7 @@ import pandas as pd
 import streamlit as st
 import matplotlib.cm as cm
 import pydeck as pdk
+import Map as Mp
 st.markdown("# Road Accident Analysis ")
 st.sidebar.markdown("# Analysis Report ")
 
@@ -30,72 +33,104 @@ row5_col1, row5_col2 = st.columns(
 )
 # --------------------------------------------------------------------------------
 with row1_col1:
-    time_period = st.selectbox(
+    time_period2 = st.selectbox(
         "Select time period:", ["Daily", "Weekly", "Monthly", "Yearly"])
 
 # --------------------------------------- check if each row satisfies the condition
 
 
-def year_func(yy):
-    # create an empty DataFrame to hold the filtered data
-    filtered = pd.DataFrame()
-    for index, row in year_data.iterrows():
+def year_func2(yy):
+    # create an empty DataFrame to hold the filtered2 data
+    filtered2 = pd.DataFrame()
+    for index, row in Mp.year_data.iterrows():
         if (row['year'] == yy):
             # if the condition is satisfied, add the row to the filtered DataFrame
-            filtered = pd.concat([filtered, row.to_frame().T])
-    return filtered
+            filtered2 = pd.concat([filtered2, row.to_frame().T])
+    return filtered2
 
 
-def month_func(yy, mm):
-    filtered = pd.DataFrame()
-    for index, row in month_data.iterrows():
+def month_func2(yy, mm):
+    filtered2 = pd.DataFrame()
+    for index, row in Mp.month_data.iterrows():
         if ((row['year'] == yy) & (row['month'] == mm)):
-            filtered = pd.concat([filtered, row.to_frame().T])
-    return filtered
+            filtered2 = pd.concat([filtered2, row.to_frame().T])
+    return filtered2
 
 
-def week_func(yy, mm, ww):
+def week_func2(yy, mm, ww):
 
-    filtered = pd.DataFrame()
-    for index, row in week_data.iterrows():
+    filtered2 = pd.DataFrame()
+    for index, row in Mp.week_data.iterrows():
         if ((row['year'] == yy) & (row['month'] == mm) & (row['week'] == ww)):
-            filtered = pd.concat([filtered, row.to_frame().T])
-    return filtered
+            filtered2 = pd.concat([filtered2, row.to_frame().T])
+    return filtered2
 
 
-def day_func(yy, mm, dd):
-    filtered = pd.DataFrame()
-    for index, row in day_data.iterrows():
+def day_func2(yy, mm, dd):
+    filtered2 = pd.DataFrame()
+    for index, row in Mp.day_data.iterrows():
         if ((row['year'] == yy) & (row['month'] == mm) & (row['day'] == dd)):
-            filtered = pd.concat([filtered, row.to_frame().T])
-    return filtered
+            filtered2 = pd.concat([filtered2, row.to_frame().T])
+    return filtered2
 
 
-def wday_func(yy, mm, ww, dd):
-    filtered = pd.DataFrame()
-    for index, row in time_data.iterrows():
+def wday_func2(yy, mm, ww, dd):
+    filtered2 = pd.DataFrame()
+    for index, row in Mp.time_data.iterrows():
         if ((row['year'] == yy) & (row['month'] == mm) & (row['week'] == ww) & (row['day'] == dd)):
-            filtered = pd.concat([filtered, row.to_frame().T])
-    return filtered
+            filtered2 = pd.concat([filtered2, row.to_frame().T])
+    return filtered2
 # ----------------------------------all parts-----------------------------
 
 
-if time_period == "Yearly":
+if time_period2 == "Yearly":
     with row2_col1:
-        year = st.slider("Select year:", 2015, 2023, 2019)
-    y = year
-    filtered_data = year_func(y)
+        year_range = st.slider("Select year range:", 2015, 2023, (2015, 2019))
+        start_year, end_year = year_range
+        filtered2_data = []
+        for year in range(start_year, end_year + 1):
+            data = year_func2(year)
+            if data is not None and not data.empty:
+                filtered2_data.append(data)
+            else:
+                st.write(f"No data found for year {year}")
 
-if time_period == "Monthly":
+if len(filtered2_data) > 0:
+    table_data = pd.concat(filtered2_data)
+    page_size = 10
+    num_pages = len(table_data) // page_size + 1
+    page_num = st.session_state.get("page_num", 0)
+
+    st.table(table_data.iloc[page_num * page_size: (page_num + 1) * page_size])
+
+    col1, col2, col3 = st.columns(3)
+    if page_num > 0:
+        if col2.button("<< Previous"):
+            page_num -= 1
+            st.session_state["page_num"] = page_num
+    if page_num < num_pages - 1:
+        if col3.button("Next >>"):
+            page_num += 1
+            st.session_state["page_num"] = page_num
+else:
+    st.write("No data found for the selected year range.")
+
+
+# st.pyplot(fig)
+
+
+# -------------------------
+
+if time_period2 == "Monthly":
     with row2_col1:
         year = st.slider("Select year:", 2015, 2023, 2020)
     with row2_col2:
         month = st.slider("Select month:", 1, 12, 11)
     y = year
     m = month
-    filtered_data = month_func(y, m)
+    filtered2_data = month_func2(y, m)
 
-if time_period == "Weekly":
+if time_period2 == "Weekly":
     with row3_col1:
         year = st.slider("Select year:", 2015, 2023, 2020)
     with row3_col2:
@@ -105,9 +140,9 @@ if time_period == "Weekly":
     y = year
     m = month
     w = week
-    filtered_data = week_func(y, m, w)
+    filtered2_data = week_func2(y, m, w)
 
-if time_period == "Daily":
+if time_period2 == "Daily":
     with row4_col1:
         year = st.slider("Select year:", 2015, 2023, 2020)
     with row4_col2:
@@ -119,8 +154,8 @@ if time_period == "Daily":
     y = year
     m = month
     d = day
-    filtered_data = day_func(y, m, d)
+    filtered2_data = day_func2(y, m, d)
     if show_day:
         week = st.slider("Select week:", 1, 52, 1)
         w = week
-        filtered_data = wday_func(y, m, w, d)
+        filtered2_data = wday_func2(y, m, w, d)
