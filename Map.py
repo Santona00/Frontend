@@ -1,3 +1,4 @@
+import folium
 import plotly.colors as colors
 from plotly.offline import iplot, init_notebook_mode
 from matplotlib import cm
@@ -80,10 +81,13 @@ row5_col1, row5_col2 = st.columns(
     [1, 1]
 )
 # --------------------------------------------------------------------------------
-with row1_col1:
-    time_period = st.selectbox(
-        "Select time period:", ["Daily", "Weekly", "Monthly", "Yearly"])
+# with row1_col1:
+#     time_period = st.selectbox(
+#         "Select time period:", ["Daily", "Weekly", "Monthly", "Yearly"])
 
+with row1_col1:
+        time_period = st.selectbox(
+            "Select time period:", ["Yearly"])
 # --------------------------------------- check if each row satisfies the condition
 
 
@@ -138,7 +142,7 @@ def wday_func(yy, mm, ww, dd):
 
 if time_period == "Yearly":
     with row2_col1:
-        year = st.slider("Select year:", 2000, 2023, 2019)
+        year = st.slider("Select year:", 2000, 2023, 2020)
     y = year
     filtered_data = year_func(y)
 
@@ -183,21 +187,9 @@ if time_period == "Daily":
 
 
 # ------------------------------------------------------------------------------------
-init_notebook_mode(connected=True)
-colorscale = ['white', 'rgb(255, 230, 230)', 'rgb(255, 204, 204)', 'rgb(255, 179, 179)',
-              'rgb(255, 153, 153)', 'rgb(255, 128, 128)', 'rgb(255, 102, 102)', 'rgb(255, 77, 77)', 'rgb(255, 51, 51)', 'rgb(255, 26, 26)', 'red']
-
-# Create a function to map the color scale to the data
-
-colors = ['rgb(255, 230, 230)', 'rgb(255, 204, 204)', 'rgb(255, 179, 179)',
-          'rgb(255, 153, 153)', 'rgb(255, 128, 128)', 'rgb(255, 102, 102)',
-          'rgb(255, 77, 77)', 'rgb(255, 51, 51)', 'rgb(255, 26, 26)', 'red']
-redscales = [[i/len(colors), c]
-             for i, c in enumerate(colors)],
-
+#init_notebook_mode(connected=True)
 
 if 'total_accidents' in filtered_data:
-    # Access the 'total_accidents' column
     max_accidents = filtered_data['total_accidents'].max()
     fig = px.choropleth_mapbox(filtered_data,
                                locations='id',
@@ -207,26 +199,24 @@ if 'total_accidents' in filtered_data:
                                hover_name='LOCATION',
                                hover_data=['LOCATION', 'District',
                                            'total_accidents', 'year', 'id'],
-                               color_continuous_scale="redscales",
-                               # range_color=[0, max_value],
+                               color_continuous_scale='#FFF5F0',
                                mapbox_style='carto-positron',
                                center={'lat': 23.6850, 'lon': 90.3563},
                                zoom=6.0,
-                               opacity=0.4,
-                               # range_color=[
-                               # 0, filtered_data['total_accidents'].max()],
-                               # color_discrete_map={str(val): get_color(
-                               # val) for val in filtered_data['total_accidents'].unique()}
+                               opacity=0.4,                              
                                )
 
     fig.update_geos(fitbounds='locations', visible=True)
     fig.update_layout(
         height=800,
         width=1000
-        # Set the height to 800 pixels
     )
     st.plotly_chart(fig, use_container_width=True)
+    
+    # =================================================
 
+    
+    #=====================================================
     show_table = st.checkbox('Show table of data')
 
     if show_table:
@@ -267,5 +257,4 @@ if 'total_accidents' in filtered_data:
 
 
 else:
-    # Handle the error
     st.error('No data found !')
