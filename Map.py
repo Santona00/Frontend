@@ -1,3 +1,4 @@
+import json
 import folium
 import plotly.colors as colors
 from plotly.offline import iplot, init_notebook_mode
@@ -9,7 +10,7 @@ from json import load
 import pandas as pd
 import streamlit as st
 import pydeck as pdk
-
+import plotly.graph_objects as go
 
 st.set_page_config(layout="wide")
 st.title("Bangladesh Road Accidents")
@@ -19,50 +20,50 @@ st.sidebar.info(
 )
 
 
-bd_districts = load(
+geojson_data = load(
     open('bangladesh_geojson_adm2_64_districts_zillas.json', 'r'))
-bd_districts['features'][61].keys()
-# bd_districts["features"][61]['properties']
+geojson_data['features'][61].keys()
 dff = pd.read_csv('final_report.csv')
 
 district_id_map = {}
-for feature in bd_districts["features"]:
+for feature in geojson_data["features"]:
     feature["id"] = feature["id"]
     district_id_map[feature["properties"]["ADM2_EN"]] = feature["id"]
-# district_id_map
+
 default_value = None
 dff['id'] = dff.District.apply(lambda x: district_id_map.get(x, default_value))
 dff.to_csv('final_output.csv', index=False)
 final_data = pd.read_csv('final_output.csv')
-# final_data
+#final_data
 
 # -------------------dividing time period------------------------
-color = cm.inferno_r(np.linspace(.3, .7, 64))
 
-grouped = final_data.groupby(['LOCATION', 'District', 'id', 'time', 'time_of_day', 'day', 'week',
-                             'month', 'year', 'Vehicle 1', 'Vehicle 2', 'Vehicle 3']).size().reset_index(name='total_accidents')
+
+grouped = final_data.groupby([ 'id','LOCATION', 'District', 'time', 'time_of_day', 'day', 'week',
+                             'month', 'year', 'Vehicle 1'])['Accidents'].sum().reset_index()
 time_data = grouped.copy()
 
 
-grouped = final_data.groupby(['LOCATION', 'District', 'id', 'day', 'week', 'month', 'year',
-                             'Vehicle 1', 'Vehicle 2', 'Vehicle 3']).size().reset_index(name='total_accidents')
+grouped = final_data.groupby(['id','LOCATION', 'District', 'day', 'week', 'month', 'year',
+                             'Vehicle 1'])['Accidents'].sum().reset_index()
 day_data = grouped.copy()
+day_data
+#grouped['Vehicle 1'] = grouped['Vehicle 1'].fillna('No Data')
 
 
-grouped = final_data.groupby(['LOCATION', 'District', 'id', 'week', 'month', 'year']).size(
-).reset_index(name='total_accidents')
+grouped = final_data.groupby(
+    ['id', 'LOCATION', 'District', 'week', 'month', 'year'])['Accidents'].sum().reset_index()
 week_data = grouped.copy()
 
 
 grouped = final_data.groupby(
-    ['LOCATION', 'District', 'id', 'month', 'year']).size().reset_index(name='total_accidents')
+    ['id', 'LOCATION', 'District', 'month', 'year'])['Accidents'].sum().reset_index()
 month_data = grouped.copy()
+#month_data
 
-
-grouped = final_data.groupby(
-    ['LOCATION', 'District', 'id', 'year']).size().reset_index(name='total_accidents')
+grouped = final_data.groupby(['id','District','year'])['Accidents'].sum().reset_index()
 year_data = grouped.copy()
-
+#year_data
 
 # ---------------------------------------------------streamlit-----------------
 row1_col1, row1_col2 = st.columns(
@@ -81,22 +82,20 @@ row5_col1, row5_col2 = st.columns(
     [1, 1]
 )
 # --------------------------------------------------------------------------------
-# with row1_col1:
-#     time_period = st.selectbox(
-#         "Select time period:", ["Daily", "Weekly", "Monthly", "Yearly"])
-
 with row1_col1:
-        time_period = st.selectbox(
-            "Select time period:", ["Yearly"])
+    time_period = st.selectbox(
+        "Select time period:", ["Daily", "Weekly", "Monthly", "Yearly"])
+
+# with row1_col1:
+#         time_period = st.selectbox(
+#             "Select time period:", ["Yearly"])
 # --------------------------------------- check if each row satisfies the condition
 
 
 def year_func(yy):
-    # create an empty DataFrame to hold the filtered data
     filtered = pd.DataFrame()
     for index, row in year_data.iterrows():
         if (row['year'] == yy):
-            # if the condition is satisfied, add the row to the filtered DataFrame
             filtered = pd.concat([filtered, row.to_frame().T])
     return filtered
 
@@ -119,36 +118,33 @@ def week_func(yy, mm, ww):
 
 
 def day_func(yy, mm, dd):
-
     filtered = pd.DataFrame()
     for index, row in day_data.iterrows():
-        #print(row['month'])
-
         if ((row['year'] == yy) & (row['month'] == mm) & (row['day'] == dd)):
-            print(row['month'])
-
             filtered = pd.concat([filtered, row.to_frame().T])
     return filtered
 
 
 def wday_func(yy, mm, ww, dd):
     filtered = pd.DataFrame()
-    for index, row in time_data.iterrows():
+    for index, row in week_data.iterrows():
         if ((row['year'] == yy) & (row['month'] == mm) & (row['week'] == ww) & (row['day'] == dd)):
             filtered = pd.concat([filtered, row.to_frame().T])
     return filtered
+
+
 # ----------------------------------all parts-----------------------------
 
 
 if time_period == "Yearly":
     with row2_col1:
-        year = st.slider("Select year:", 2000, 2023, 2020)
+        year = st.slider("Select year:", 2020, 2023, 2020)
     y = year
     filtered_data = year_func(y)
 
 if time_period == "Monthly":
     with row2_col1:
-        year = st.slider("Select year:", 2000, 2023, 2020)
+        year = st.slider("Select year:", 2020, 2023, 2020)
     with row2_col2:
         month = st.slider("Select month:", 1, 12, 11)
     y = year
@@ -157,7 +153,7 @@ if time_period == "Monthly":
 
 if time_period == "Weekly":
     with row3_col1:
-        year = st.slider("Select year:", 2000, 2023, 2020)
+        year = st.slider("Select year:", 2020, 2023, 2020)
     with row3_col2:
         month = st.slider("Select month:", 1, 12, 11)
     with row3_col3:
@@ -169,7 +165,7 @@ if time_period == "Weekly":
 
 if time_period == "Daily":
     with row4_col1:
-        year = st.slider("Select year:", 2000, 2023, 2020)
+        year = st.slider("Select year:", 2020, 2023, 2020)
     with row4_col2:
         month = st.slider("Select month:", 1, 12, 11)
     with row4_col3:
@@ -185,41 +181,77 @@ if time_period == "Daily":
         w = week
         filtered_data = wday_func(y, m, w, d)
 
-
+# print(filtered_data['Accidents'].dtypes)
+filtered_data['Accidents'] = pd.to_numeric(
+    filtered_data['Accidents'], errors='coerce')
+print(filtered_data.columns)
+# print(filtered_data['Accidents'].isna().sum())
+# print(filtered_data['Accidents'].dtypes)
+filtered_data['Accidents'] = filtered_data['Accidents'].astype(int)
+# print(filtered_data['Accidents'].dtypes)
 # ------------------------------------------------------------------------------------
-#init_notebook_mode(connected=True)
 
-if 'total_accidents' in filtered_data:
-    max_accidents = filtered_data['total_accidents'].max()
-    fig = px.choropleth_mapbox(filtered_data,
-                               locations='id',
-                               geojson=bd_districts,
-                               color='total_accidents',
-                               title=f'Bangladesh Road Accidents ({y} Year])',
-                               hover_name='LOCATION',
-                               hover_data=['LOCATION', 'District',
-                                           'total_accidents', 'year', 'id'],
-                               color_continuous_scale='#FFF5F0',
-                               mapbox_style='carto-positron',
-                               center={'lat': 23.6850, 'lon': 90.3563},
-                               zoom=6.0,
-                               opacity=0.4,                              
-                               )
+#==================================================================
 
-    fig.update_geos(fitbounds='locations', visible=True)
-    fig.update_layout(
+# with open("bangladesh_geojson_adm2_64_districts_zillas.json") as f:
+#     geojson_data = json.load(f)
+
+
+colorscale = [
+    [0, "rgb(255, 255, 255)"],
+    [0.1, "rgb(255, 235, 235)"],
+    [0.2, "rgb(255, 205, 205)"],
+    [0.3, "rgb(255, 175, 175)"],
+    [0.4, "rgb(255, 145, 145)"],
+    [0.5, "rgb(255, 115, 115)"],
+    [0.6, "rgb(255, 85, 85)"],
+    [0.7, "rgb(255, 55, 55)"],
+    [0.8, "rgb(255, 25, 25)"],
+    [0.9, "rgb(205, 0, 0)"],
+    [1, "rgb(155, 0, 0)"]
+]
+
+
+fig = go.Figure()
+
+fig.add_trace(go.Choroplethmapbox(
+    geojson=geojson_data,
+    locations=filtered_data['id'],
+    z=filtered_data['Accidents'],
+    colorscale=colorscale,
+    zmin=filtered_data['Accidents'].min(),
+    zmax=filtered_data['Accidents'].max(),
+    marker_opacity=0.7,
+    marker_line_width=0.7,  
+    marker_line_color='rgb(0, 0, 0)',
+    text=filtered_data['District'],
+    hovertemplate='<b>%{text}</b><br>Accidents: %{z}<extra></extra>'
+))
+
+empty_locations = filtered_data[filtered_data['Accidents'] == 0]['id']
+for location in empty_locations:
+    fig.data[0].hovertemplate = fig.data[0].hovertemplate.replace(
+        location, f'{location}<br>Accidents: 0')
+
+fig.update_layout(
+    mapbox_style="carto-positron",
+    mapbox_zoom=6.5,
+    mapbox_center={"lat": 23.6850, "lon": 90.3563},
+    margin={"r": 0, "t": 0, "l": 0, "b": 0},
+)
+
+fig.update_geos(fitbounds='locations', visible=True)
+fig.update_layout(
         height=800,
         width=1000
     )
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # =================================================
 
+st.plotly_chart(fig)
     
     #=====================================================
-    show_table = st.checkbox('Show table of data')
+show_table = st.checkbox('Show table of data')
 
-    if show_table:
+if show_table:
         row6_col1, row6_col2, row6_col3 = [1, 1, 1]
         num_rows = len(filtered_data)
         page_size = 10
