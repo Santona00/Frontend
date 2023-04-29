@@ -15,10 +15,11 @@ import plotly.graph_objects as go
 st.set_page_config(layout="wide")
 st.title("Bangladesh Road Accidents")
 st.sidebar.info(
-    "Choropleth Bangladesh Map\n"
-    "Road accidents"
+    "Choropleth Bangladesh Map"
 )
-
+st.sidebar.info(
+    "Road Accidents"
+)
 
 geojson_data = load(
     open('bangladesh_geojson_adm2_64_districts_zillas.json', 'r'))

@@ -13,10 +13,12 @@ import streamlit as st
 import matplotlib.cm as cm
 import pydeck as pdk
 import Map as Mp
-import mplcursors
+
 st.markdown("# Road Accident Analysis ")
 st.sidebar.markdown("# Analysis Report ")
-
+st.sidebar.info(
+    "Road Accidents"
+)
 
 row1_col1, row1_col2 = st.columns(
     [0.8, 2]
@@ -39,15 +41,13 @@ with row1_col1:
     time_period2 = st.selectbox(
         "Select time period:", ["Monthly", "Yearly"])
 
-# --------------------------------------- check if each row satisfies the condition
+# ---------------------------------------
 
 
 def year_func2(yy):
-    # create an empty DataFrame to hold the filtered2 data
     filtered2 = pd.DataFrame()
     for index, row in Mp.year_data.iterrows():
         if (row['year'] == yy):
-            # if the condition is satisfied, add the row to the filtered DataFrame
             filtered2 = pd.concat([filtered2, row.to_frame().T])
     return filtered2
 
@@ -64,22 +64,22 @@ def month_func2(yy, mm):
 # ----------------------------------all parts-----------------------------
 if time_period2 == "Yearly":
     with row2_col1:
-        year_range = st.slider("Select year range:", 2015, 2023, (2015, 2019))
+        year_range = st.slider("Select year range:", 2020, 2023, (2020, 2021))
         start_year, end_year = year_range
         filtered2_data = []
         years = []
-        total_accidents = []
+        Accidents = []
         for year in range(start_year, end_year + 1):
             data = year_func2(year)
             if data is not None and not data.empty:
                 filtered2_data.append(data)
                 years.append(year)
-                total_accidents.append(data["total_accidents"].sum())
+                Accidents.append(data["Accidents"].sum())
             else:
                 st.write(f"No data found for year {year}")
         if len(filtered2_data) > 0:
             fig, ax = plt.subplots()
-            ax.plot(years, total_accidents, color='red')
+            ax.plot(years, Accidents, color='red')
             ax.set_xlabel("Years")
             ax.set_ylabel("Total Accidents")
             ax.set_title("Accident Count / Year")

@@ -17,8 +17,10 @@ import altair as alt
 import calendar
 
 # st.markdown("# Road Accident Analysis ")
-st.sidebar.markdown("# See cumulative accident report")
-
+st.sidebar.markdown("# Cumulative accident report")
+st.sidebar.info(
+    "Cumulative accident report yearly and monthly"
+)
 
 row1_col1, row1_col2 = st.columns(
     [0.8, 2]
@@ -62,19 +64,19 @@ with row1_col1:
 
 if time_period3 == "Yearly":
     with row2_col1:
-        year_range = st.slider("Select year range:", 2015, 2023, (2015, 2019))
+        year_range = st.slider("Select year range:", 2020, 2023, (2020, 2021))
         start_year, end_year = year_range
         filtered3_data = []
         years = []
-        total_accidents = []
+        Accidents = []
         cumulative_accidents = []
         for year in range(start_year, end_year + 1):
             data = year_func3(year)
             if data is not None and not data.empty:
                 filtered3_data.append(data)
                 years.append(year)
-                total_accidents.append(data["total_accidents"].sum())
-                cumulative_accidents.append(sum(total_accidents))
+                Accidents.append(data["Accidents"].sum())
+                cumulative_accidents.append(sum(Accidents))
             else:
                 st.write(f"No data found for year {year}")
         if len(filtered3_data) > 0:
@@ -83,9 +85,12 @@ if time_period3 == "Yearly":
                 {"Year": years, "Cumulative Accidents": cumulative_accidents})
 
             base = alt.Chart(df_chart).encode(
-                x=alt.X('Year:O', axis=alt.Axis(format='d', labelAngle=0)),
-                y='Cumulative Accidents',
-            )
+                x=alt.X('Year:O', axis=alt.Axis(format='d', labelAngle=0, labelColor='black',
+                        titleColor='black', titleOpacity=1.0)),
+                # y='Cumulative Accidents',
+                y=alt.Y('Cumulative Accidents', axis=alt.Axis(labelColor='black',
+                        titleColor='black', titleOpacity=1.0)),
+           )
             line = base.mark_line(point=True, color='red').encode(
                 tooltip=[
                     alt.Tooltip('Year', title='Year'),
@@ -106,27 +111,43 @@ if time_period3 == "Yearly":
             st.altair_chart(chart)
 
 
-else:
-    st.write("No data found for the selected year range.")
+
 
 
 if time_period3 == "Monthly":
     with row3_col1:
-        year = st.slider("Select year:", 2015, 2023, 2020)
+        year = st.slider("Select year:", 2020, 2023, 2020)
         filtered3_data = month_func3(year)
 
         if filtered3_data is not None and not filtered3_data.empty:
-            total_accidents = filtered3_data.groupby(
-                'month')['total_accidents'].sum().cumsum().reset_index()
+            Accidents = filtered3_data.groupby(
+                'month')['Accidents'].sum().cumsum().reset_index()
 
-            chart = alt.Chart(total_accidents).mark_line(point=True, color='red').encode(
+           
+            Accidents['month'] = Accidents['month'].apply(
+                lambda x: calendar.month_name[x])
+            
+            
+            month_order = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December']
+
+           
+            Accidents['month'] = pd.Categorical(
+                Accidents['month'], categories=month_order, ordered=True)
+            Accidents = Accidents.sort_values('month')
+
+           
+            Accidents.reset_index(drop=True, inplace=True)
+
+            chart = alt.Chart(Accidents).mark_line(point=True, color='red',opacity=1.0).encode(
                 x=alt.X('month', axis=alt.Axis(
-                    labelAngle=0, format='d')),
-                y='total_accidents',
+                    labelAngle=0, labelColor='black', titleColor='black', titleOpacity=1.0), sort=month_order),
+                y=alt.Y('Accidents', axis=alt.Axis(labelColor='black',
+                        titleColor='black', titleOpacity=1.0)),
                 tooltip=[
-                    alt.Tooltip('month', title='month'),
-                    alt.Tooltip('total_accidents',
-                                title='Cumulative Accidents', format='.2f')
+                    alt.Tooltip('month', title='Month'),
+                    alt.Tooltip(
+                        'Accidents', title='Cumulative Accidents', format='.2f')
                 ]
             ).properties(
                 width=850,
@@ -135,5 +156,8 @@ if time_period3 == "Monthly":
             )
             st.altair_chart(chart)
 
+
 else:
     st.write("No data found for the selected year range.")
+
+
