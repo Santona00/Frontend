@@ -39,30 +39,30 @@ final_data = pd.read_csv('final_output.csv')
 # -------------------dividing time period------------------------
 
 
-grouped = final_data.groupby([ 'id','LOCATION', 'District', 'time', 'time_of_day', 'day', 'week',
+grouped1 = final_data.groupby([ 'id','LOCATION', 'District', 'time', 'time_of_day', 'day', 'week',
                              'month', 'year', 'Vehicle 1'])['Accidents'].sum().reset_index()
-time_data = grouped.copy()
+time_data = grouped1.copy()
 
 
-grouped = final_data.groupby(['id','LOCATION', 'District', 'day', 'week', 'month', 'year',
+grouped2 = final_data.groupby(['id','LOCATION', 'District', 'day', 'week', 'month', 'year',
                              'Vehicle 1'])['Accidents'].sum().reset_index()
-day_data = grouped.copy()
-day_data
-#grouped['Vehicle 1'] = grouped['Vehicle 1'].fillna('No Data')
+# grouped2['Vehicle 1'] = grouped2['Vehicle 1'].fillna('No Data')
+day_data = grouped2.copy()
+#day_data
 
 
-grouped = final_data.groupby(
+grouped3 = final_data.groupby(
     ['id', 'LOCATION', 'District', 'week', 'month', 'year'])['Accidents'].sum().reset_index()
-week_data = grouped.copy()
+week_data = grouped3.copy()
 
 
-grouped = final_data.groupby(
+grouped4 = final_data.groupby(
     ['id', 'LOCATION', 'District', 'month', 'year'])['Accidents'].sum().reset_index()
-month_data = grouped.copy()
+month_data = grouped4.copy()
 #month_data
 
-grouped = final_data.groupby(['id','District','year'])['Accidents'].sum().reset_index()
-year_data = grouped.copy()
+grouped5 = final_data.groupby(['id','District','year'])['Accidents'].sum().reset_index()
+year_data = grouped5.copy()
 #year_data
 
 # ---------------------------------------------------streamlit-----------------
@@ -109,7 +109,6 @@ def month_func(yy, mm):
 
 
 def week_func(yy, mm, ww):
-
     filtered = pd.DataFrame()
     for index, row in week_data.iterrows():
         if ((row['year'] == yy) & (row['month'] == mm) & (row['week'] == ww)):
@@ -125,9 +124,11 @@ def day_func(yy, mm, dd):
     return filtered
 
 
+
 def wday_func(yy, mm, ww, dd):
     filtered = pd.DataFrame()
-    for index, row in week_data.iterrows():
+    # time_data
+    for index, row in time_data.iterrows():
         if ((row['year'] == yy) & (row['month'] == mm) & (row['week'] == ww) & (row['day'] == dd)):
             filtered = pd.concat([filtered, row.to_frame().T])
     return filtered
@@ -182,110 +183,112 @@ if time_period == "Daily":
         filtered_data = wday_func(y, m, w, d)
 
 # print(filtered_data['Accidents'].dtypes)
-filtered_data['Accidents'] = pd.to_numeric(
-    filtered_data['Accidents'], errors='coerce')
-print(filtered_data.columns)
+# filtered_data['Accidents'] = pd.to_numeric(
+#     filtered_data['Accidents'], errors='coerce')
+# print(filtered_data.columns)
 # print(filtered_data['Accidents'].isna().sum())
 # print(filtered_data['Accidents'].dtypes)
-filtered_data['Accidents'] = filtered_data['Accidents'].astype(int)
+# filtered_data['Accidents'] = filtered_data['Accidents'].astype(int)
 # print(filtered_data['Accidents'].dtypes)
 # ------------------------------------------------------------------------------------
 
 #==================================================================
 
-# with open("bangladesh_geojson_adm2_64_districts_zillas.json") as f:
-#     geojson_data = json.load(f)
+
+if 'Accidents' in filtered_data:
+    colorscale = [
+        [0, "rgb(255, 255, 255)"],
+        [0.1, "rgb(255, 235, 235)"],
+        [0.2, "rgb(255, 205, 205)"],
+        [0.3, "rgb(255, 175, 175)"],
+        [0.4, "rgb(255, 145, 145)"],
+        [0.5, "rgb(255, 115, 115)"],
+        [0.6, "rgb(255, 85, 85)"],
+        [0.7, "rgb(255, 55, 55)"],
+        [0.8, "rgb(255, 25, 25)"],
+        [0.9, "rgb(205, 0, 0)"],
+        [1, "rgb(155, 0, 0)"]
+    ]
 
 
-colorscale = [
-    [0, "rgb(255, 255, 255)"],
-    [0.1, "rgb(255, 235, 235)"],
-    [0.2, "rgb(255, 205, 205)"],
-    [0.3, "rgb(255, 175, 175)"],
-    [0.4, "rgb(255, 145, 145)"],
-    [0.5, "rgb(255, 115, 115)"],
-    [0.6, "rgb(255, 85, 85)"],
-    [0.7, "rgb(255, 55, 55)"],
-    [0.8, "rgb(255, 25, 25)"],
-    [0.9, "rgb(205, 0, 0)"],
-    [1, "rgb(155, 0, 0)"]
-]
+    fig = go.Figure()
 
+    fig.add_trace(go.Choroplethmapbox(
+        geojson=geojson_data,
+        locations=filtered_data['id'],
+        z=filtered_data['Accidents'],
+        colorscale=colorscale,
+        zmin=filtered_data['Accidents'].min(),
+        zmax=filtered_data['Accidents'].max(),
+        marker_opacity=0.7,
+        marker_line_width=0.7,  
+        marker_line_color='rgb(0, 0, 0)',
+        text=filtered_data['District'],
+        hovertemplate='<b>%{text}</b><br>Accidents: %{z}<extra></extra>'
+    ))
 
-fig = go.Figure()
+    empty_locations = filtered_data[filtered_data['Accidents'] == 0]['id']
+    for location in empty_locations:
+        fig.data[0].hovertemplate = fig.data[0].hovertemplate.replace(
+            location, f'{location}<br>Accidents: 0')
 
-fig.add_trace(go.Choroplethmapbox(
-    geojson=geojson_data,
-    locations=filtered_data['id'],
-    z=filtered_data['Accidents'],
-    colorscale=colorscale,
-    zmin=filtered_data['Accidents'].min(),
-    zmax=filtered_data['Accidents'].max(),
-    marker_opacity=0.7,
-    marker_line_width=0.7,  
-    marker_line_color='rgb(0, 0, 0)',
-    text=filtered_data['District'],
-    hovertemplate='<b>%{text}</b><br>Accidents: %{z}<extra></extra>'
-))
-
-empty_locations = filtered_data[filtered_data['Accidents'] == 0]['id']
-for location in empty_locations:
-    fig.data[0].hovertemplate = fig.data[0].hovertemplate.replace(
-        location, f'{location}<br>Accidents: 0')
-
-fig.update_layout(
-    mapbox_style="carto-positron",
-    mapbox_zoom=6.5,
-    mapbox_center={"lat": 23.6850, "lon": 90.3563},
-    margin={"r": 0, "t": 0, "l": 0, "b": 0},
-)
-
-fig.update_geos(fitbounds='locations', visible=True)
-fig.update_layout(
-        height=800,
-        width=1000
+    fig.update_layout(
+        mapbox_style="carto-positron",
+        mapbox_zoom=6.5,
+        mapbox_center={"lat": 23.6850, "lon": 90.3563},
+        margin={"r": 0, "t": 0, "l": 0, "b": 0},
     )
 
-st.plotly_chart(fig)
-    
+    fig.update_geos(fitbounds='locations', visible=True)
+    fig.update_layout(
+            height=800,
+            width=1000
+        )
+
+    st.plotly_chart(fig)
+        
     #=====================================================
-show_table = st.checkbox('Show table of data')
+    show_table = st.checkbox('Show table of data')
 
-if show_table:
-        row6_col1, row6_col2, row6_col3 = [1, 1, 1]
-        num_rows = len(filtered_data)
-        page_size = 10
-        num_pages = num_rows // page_size + \
-            (1 if num_rows % page_size > 0 else 0)
-        start_row = st.session_state.get('start_row', 0)
-        current_page = start_row // page_size + 1 if start_row > 0 else 1
-        start_row = max(0, min(num_rows - page_size, start_row))
-        end_row = start_row + page_size if start_row + \
-            page_size <= num_rows else num_rows
-        table_data = filtered_data.iloc[start_row:end_row].to_html(index=False)
-        table_style = '<style>table {margin: 0 auto;}</style>'
-        container_style = '<style>.container {display: flex; justify-content: center;}</style>'
+    if show_table:
+            row6_col1, row6_col2, row6_col3 = [1, 1, 1]
+            num_rows = len(filtered_data)
+            page_size = 10
+            num_pages = num_rows // page_size + \
+                (1 if num_rows % page_size > 0 else 0)
+            start_row = st.session_state.get('start_row', 0)
+            current_page = start_row // page_size + 1 if start_row > 0 else 1
+            start_row = max(0, min(num_rows - page_size, start_row))
+            end_row = start_row + page_size if start_row + \
+                page_size <= num_rows else num_rows
+            table_data = filtered_data.iloc[start_row:end_row].to_html(index=False)
+            table_style = '<style>table {margin: 0 auto;}</style>'
+            container_style = '<style>.container {display: flex; justify-content: center;}</style>'
 
-        st.session_state.start_row = start_row
+            st.session_state.start_row = start_row
 
-        st.markdown(
-            f'<div class="container" style="overflow-x:auto;">{table_style}{table_data}</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="container" style="overflow-x:auto;">{table_style}{table_data}</div>', unsafe_allow_html=True)
 
-        prev_disabled = start_row == 0
-        next_disabled = end_row == num_rows
-        if st.button("<", key="prev", disabled=prev_disabled):
-            st.session_state.start_row = max(0, start_row - page_size)
-        if st.button(">", key="next", disabled=next_disabled):
-            st.session_state.start_row = min(
-                start_row + page_size, num_rows - page_size)
+            prev_disabled = start_row == 0
+            next_disabled = end_row == num_rows
+            if st.button("<", key="prev", disabled=prev_disabled):
+                st.session_state.start_row = max(0, start_row - page_size)
+            if st.button(">", key="next", disabled=next_disabled):
+                st.session_state.start_row = min(
+                    start_row + page_size, num_rows - page_size)
 
-        start_row = st.session_state.get('start_row', 0)
-        end_row = start_row + page_size if start_row + \
-            page_size <= num_rows else num_rows
-        page_info = f'<p>Showing rows {start_row+1}-{end_row} of {num_rows}</p>'
+            start_row = st.session_state.get('start_row', 0)
+            end_row = start_row + page_size if start_row + \
+                page_size <= num_rows else num_rows
+            page_info = f'<p>Showing rows {start_row+1}-{end_row} of {num_rows}</p>'
 
-        st.markdown(
-            f'<div class="container" style="text-align:center;">{page_info}</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="container" style="text-align:center;">{page_info}</div>', unsafe_allow_html=True)
+
+
+    else:
+        st.error('No data found !')
 
 
 else:
