@@ -99,7 +99,7 @@ if time_period3 == "Yearly":
                 ]
             )
             text = base.mark_text(align='left', baseline='middle', dx=5, dy=-5).encode(
-                text=alt.Text('Cumulative Accidents', format='.2f')
+                text=alt.Text('Cumulative Accidents', format='d')
             )
             chart = (line + text).properties(
                 width=850,
@@ -157,7 +157,5 @@ if time_period3 == "Monthly":
             st.altair_chart(chart)
 
 
-else:
-    st.write("No data found for the selected year range.")
 
 

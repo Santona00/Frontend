@@ -13,6 +13,8 @@ import streamlit as st
 import matplotlib.cm as cm
 import pydeck as pdk
 import Map as Mp
+import calendar
+import altair as alt
 
 st.markdown("# Road Accident Analysis ")
 st.sidebar.markdown("# Analysis Report ")
@@ -52,46 +54,82 @@ def year_func2(yy):
     return filtered2
 
 
-def month_func2(yy, mm):
+def month_func2(yy):
     filtered2 = pd.DataFrame()
     for index, row in Mp.month_data.iterrows():
-        if ((row['year'] == yy) & (row['month'] == mm)):
+        if (row['year'] == yy):
             filtered2 = pd.concat([filtered2, row.to_frame().T])
     return filtered2
 
 
-
 # ----------------------------------all parts-----------------------------
-if time_period2 == "Yearly":
-    with row2_col1:
-        year_range = st.slider("Select year range:", 2020, 2023, (2020, 2021))
-        start_year, end_year = year_range
-        filtered2_data = []
-        years = []
-        Accidents = []
-        for year in range(start_year, end_year + 1):
-            data = year_func2(year)
-            if data is not None and not data.empty:
-                filtered2_data.append(data)
-                years.append(year)
-                Accidents.append(data["Accidents"].sum())
-            else:
-                st.write(f"No data found for year {year}")
-        if len(filtered2_data) > 0:
-            fig, ax = plt.subplots()
-            ax.plot(years, Accidents, color='red')
-            ax.set_xlabel("Years")
-            ax.set_ylabel("Total Accidents")
-            ax.set_title("Accident Count / Year")
-            with row6_col1:
-                # st.pyplot(fig)
-                st.write(fig)
+if time_period2 == "Monthly":
+    with row3_col1:
+        year = st.slider("Select year:", 2020, 2023, 2020)
+        filtered2_data = month_func2(year)
+        if filtered2_data is not None and not filtered2_data.empty:
+            Accidents = filtered2_data.groupby(
+                'month')['Accidents'].sum().reset_index()
 
-else:
-    st.write("No data found for the selected year range.")
+            Accidents['month'] = Accidents['month'].apply(
+                lambda x: calendar.month_name[x])
+
+            month_order = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December']
+
+            Accidents['month'] = pd.Categorical(
+                Accidents['month'], categories=month_order, ordered=True)
+            Accidents = Accidents.sort_values('month')
+
+            Accidents.reset_index(drop=True, inplace=True)
+
+            chart = alt.Chart(Accidents).mark_line(point=True, color='red', opacity=1.0).encode(
+                x=alt.X('month', axis=alt.Axis(
+                    labelAngle=0, labelColor='black', titleColor='black', titleOpacity=1.0), sort=month_order),
+                y=alt.Y('Accidents', axis=alt.Axis(labelColor='black',
+                        titleColor='black', titleOpacity=1.0)),
+                tooltip=[
+                    alt.Tooltip('month', title='Month'),
+                    alt.Tooltip(
+                        'Accidents', title='Accidents/Month', format='d')
+                ]
+            ).properties(
+                width=850,
+                height=700,
+                title=" Accident Count / Month ",
+            )
+            st.altair_chart(chart)
+
+
+if time_period2 == "Yearly":
+    year_range2 = st.slider("Select year range:", 2020, 2023, (2020, 2021))
+    start_year, end_year = year_range2
+    filtered2_data = []
+    years = []
+    Accidents = []
+    for year in range(start_year, end_year + 1):
+        data = year_func2(year)
+        if data is not None and not data.empty:
+            filtered2_data.append(data)
+            years.append(year)
+            Accidents.append(data["Accidents"].sum())
+        else:
+            st.write(f"No data found for year {year}")
+    if len(filtered2_data) > 0:
+        df_chart = pd.DataFrame({"Year": years, "Accidents": Accidents})
+        chart = alt.Chart(df_chart).mark_line(point=True, color='red').encode(
+            x=alt.X("Year:O", axis=alt.Axis(format='d', labelAngle=0, labelColor='black',
+                                            titleColor='black', titleOpacity=1.0)),
+            y=alt.Y("Accidents", axis=alt.Axis(labelColor='black',
+                                               titleColor='black', titleOpacity=1.0)),
+            tooltip=[alt.Tooltip('Year', title='Year'),
+                     alt.Tooltip('Accidents', title='Accidents', format='d')]
+        ).properties(
+            width=850,
+            height=700,
+            title="Accident Count / Year"
+        )
+        st.altair_chart(chart)
+
 
 # -------------------------
-
-
-   
-
