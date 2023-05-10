@@ -15,8 +15,7 @@ import pydeck as pdk
 import Map as Mp
 import altair as alt
 import calendar
-
-# st.markdown("# Road Accident Analysis ")
+#st.markdown("# Road Accident Analysis ")
 st.sidebar.markdown("# Cumulative accident report")
 st.sidebar.info(
     "Cumulative accident report yearly and monthly"
@@ -87,7 +86,6 @@ if time_period3 == "Yearly":
             base = alt.Chart(df_chart).encode(
                 x=alt.X('Year:O', axis=alt.Axis(format='d', labelAngle=0, labelColor='black',
                         titleColor='black', titleOpacity=1.0)),
-                # y='Cumulative Accidents',
                 y=alt.Y('Cumulative Accidents', axis=alt.Axis(labelColor='black',
                         titleColor='black', titleOpacity=1.0)),
            )

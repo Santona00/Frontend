@@ -103,8 +103,8 @@ if time_period2 == "Monthly":
 
 
 if time_period2 == "Yearly":
-    year_range2 = st.slider("Select year range:", 2020, 2023, (2020, 2021))
-    start_year, end_year = year_range2
+    year_range = st.slider("Select year range:", 2020, 2023, (2020, 2021))
+    start_year, end_year = year_range
     filtered2_data = []
     years = []
     Accidents = []
