@@ -1,11 +1,9 @@
-
-import plotly.colors
-import iplot
-import matplotlib.animation
-import plotly.io 
-import plotly.express 
-import numpy 
-import pandas 
-import streamlit
-import pydeck 
-import plotly.graph_objects 
+pip install plotly
+pip install numpy
+pip install streamlit
+pip install pydeck
+pip install plotly.express
+pip install plotly.io
+pip install plotly.colors
+pip install matplotlib.animation
+pip install plotly.graph_objects 
