@@ -2,6 +2,7 @@ import json
 import plotly.colors as colors
 from plotly.offline import iplot, init_notebook_mode
 # from matplotlib import cm
+import matplotlib.animation as animation
 import plotly.io as pio
 import plotly.express as px
 import numpy as np
