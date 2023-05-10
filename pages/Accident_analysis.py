@@ -83,7 +83,7 @@ if time_period2 == "Monthly":
 
             Accidents.reset_index(drop=True, inplace=True)
 
-            chart = alt.Chart(Accidents).mark_line(point=True, color='red', opacity=1.0).encode(
+            chart = alt.Chart(Accidents).mark_line(point=True, stroke='red', color='red', opacity=1.0, strokeWidth=3).encode(
                 x=alt.X('month', axis=alt.Axis(
                     labelAngle=0, labelColor='black', titleColor='black', titleOpacity=1.0), sort=month_order),
                 y=alt.Y('Accidents', axis=alt.Axis(labelColor='black',
@@ -97,6 +97,7 @@ if time_period2 == "Monthly":
                 width=850,
                 height=700,
                 title=" Accident Count / Month ",
+
             )
             st.altair_chart(chart)
 
